@@ -54,6 +54,8 @@ blockquote{margin:34px 0;padding:4px 0 4px 24px;border-left:3px solid var(--ink)
 .aside{margin:30px 0;padding:18px 22px;background:var(--wash);border:1px solid var(--hair);border-left:4px solid #b9b4aa;border-radius:8px}
 .aside .tag{font:700 10.5px var(--sans);letter-spacing:.16em;color:#8a857b;display:block;margin-bottom:8px}
 .aside p{margin:0;font-size:17px}
+figure.strip{margin:28px 0 30px}
+figure.strip figcaption{margin-top:6px}
 .katex{font-size:1.04em}
 .katex-display{overflow-x:auto;overflow-y:hidden;padding:3px 0}
 svg text{font-family:var(--sans)}
@@ -206,17 +208,18 @@ svg text{font-family:var(--sans)}
 
 <div class="handoff">
 <span class="tag">THE PROBLEM WE LEAVE WITH</span>
-<p>The estimates are honest now, but the machine is still wasteful in three separate ways. One: it replays every memory equally often, whether or not it has anything left to teach. Two: it relearns "this situation is good" separately for every action. Three: reward information crawls backward one link per update. Three wastes, three patches.</p>
+<p>The estimates are honest now, but the machine is still wasteful in three separate ways. One: it replays every memory equally often, whether or not it has anything left to teach. Two: it relearns "this situation is good" separately for every action. Three: reward information crawls backward one link per update. Three wastes, three patches — and keep count of the patches, because they are about to matter all at once.</p>
 </div>
 </section>
 <section class="chapter" id="ch5">
 <span class="eyebrow">PART 5</span>
 <h2 class="chtitle">The Patch Era</h2>
-<p class="chdek">Double DQN fixed what the machine believes. The next three patches fix how it spends its effort: which memories it learns from, what its network has to relearn, and how far each update reaches.</p>
+<p class="chdek">Double DQN fixed what the machine believes. The next five patches fix how it spends its effort — one station of the loop at a time.</p>
 
-<p>(Why one chapter for three algorithms? Because none of them changes what the algorithm <em>is</em> — each keeps DQN's loop and upgrades one component. That independence is exactly what will let the finale turn them all on at once.)</p>
+<p>Every algorithm from here on lives inside the same loop, run millions of times: <strong>act</strong> in the world, <strong>store</strong> the transition, <strong>sample</strong> a minibatch, <strong>predict</strong> values, build the <strong>target</strong>, update. None of the coming patches changes the loop — each rebuilds exactly one station of it, and that independence is what will let the finale turn them all on at once. Two stations are already rebuilt: DQN patched storage and the target, and Double DQN re-patched the target. Here is the machine as it stands — the dim stations are where the waste lives:</p>
+<figure class="strip"><svg class="loopstrip" viewBox="0 0 640 118" data-conf='[["ACT","ε-greedy",0],["STORE","replay · Part 3",1],["SAMPLE","uniform",0],["PREDICT","one Q per action",0],["TARGET","frozen · double",1]]'></svg><figcaption>DQN's loop after Part 4. Green stations are already patched; red is where the waste still lives.</figcaption></figure>
 
-<h3>Which memories: Prioritized Experience Replay</h3>
+<h3>The sampling station: Prioritized Experience Replay</h3>
 <p>So far, every \((s,a,r,s')\) is sampled uniformly from the buffer. Uniform replay treats each transition identically, but most of an agent's experience has nothing left to teach — the useful gradient lives in the rare moments where the value estimate was badly wrong. It's the difference between rereading the whole textbook front to back and drilling the flashcards you keep getting wrong. Conveniently, Q-learning already computes "how wrong was I" on every single step: the TD error \(\delta\). So sample in proportion to it. <strong>Prioritized Experience Replay</strong> (Schaul et al., 2015) replays transitions with probability proportional to their surprise, spending updates where predictions failed. (Non-uniform sampling skews the statistics, so each sample carries a small importance weight to keep the math honest.)</p>
 
 <figure>
@@ -225,7 +228,9 @@ svg text{font-family:var(--sans)}
 <figcaption>Twelve stored transitions; gray bar = each one's surprise |δ|. Orange shows how often each gets replayed. Uniform sampling wastes most draws on transitions with nothing left to teach; prioritized sampling pours updates into the surprises.</figcaption>
 </figure>
 
-<h3>What gets relearned: Dueling networks</h3>
+<figure class="strip"><svg class="loopstrip" viewBox="0 0 640 118" data-conf='[["ACT","ε-greedy",0],["STORE","replay",1],["SAMPLE","prioritized",2],["PREDICT","one Q per action",0],["TARGET","frozen · double",1]]'></svg><figcaption>Sampler rebuilt: updates now flow to the memories where predictions failed.</figcaption></figure>
+<p>Follow one sampled memory to the next station — what does the network actually <em>do</em> with it?</p>
+<h3>The prediction station: Dueling networks</h3>
 <p>Watch plain DQN fail at something that should be easy. The agent discovers a lucrative state it has only ever tried one action in — it always happened to go left there. It has learned that \(Q(s,\text{left})\) is high… and it believes nothing about the other actions in that state. That should strike you as wasteful: most of that value plainly belongs to the <em>state</em> — being there is what's good — not to the particular choice of going left. But a plain Q-network has no way to say so. Each action's value is a separate output, so "this situation is good" must be relearned separately for every action, from experiences where that specific action was tried.</p>
 <p>The waste is structural. \(Q(s,a)\) entangles two different quantities: how good the <em>situation</em> is regardless of what you do — the state value \(V(s)\) from Volume 1 — and how much your particular <em>choice</em> adds or subtracts on top, the advantage \(A(s,a)\). And in most states the second part is tiny: cruising an empty highway, every reasonable action leads to roughly the same future, so all the Q-values are one big shared number plus small differences. Only occasionally — a car swerving into your lane — does the choice dominate.</p>
 <p>The <strong>dueling architecture</strong> (Wang et al., 2015) builds that decomposition into the network itself: one stream estimates \(V(s)\), another estimates \(A(s,a)\), and they recombine into \(Q = V + A\). Now the failure above disappears: the single left-visit raises \(V(s)\), so <em>every</em> action's estimate in that state starts out sensible, and only the small differences remain to be learned — the shared part is learned once, not once per action. (The advantage stream is centered so the two streams can't trade off against each other.) In the paper's Atari saliency maps you can watch the division of labor: the V stream stares at the horizon, and the A stream only wakes up when other cars get close.</p>
@@ -264,7 +269,9 @@ svg text{font-family:var(--sans)}
 <figcaption>One network, two questions. The V stream learns "this state is good" once; the A stream only has to learn how actions differ. Sound familiar? It's Volume 1's value/advantage split, rediscovered inside a value method's architecture.</figcaption>
 </figure>
 
-<h3>How far updates reach: multi-step targets</h3>
+<figure class="strip"><svg class="loopstrip" viewBox="0 0 640 118" data-conf='[["ACT","ε-greedy",0],["STORE","replay",1],["SAMPLE","prioritized",1],["PREDICT","V + A",2],["TARGET","frozen · double",1]]'></svg><figcaption>Prediction rebuilt: the shared part of Q is learned once, not once per action.</figcaption></figure>
+<p>The next waste hides in the target itself: how far each update's information travels.</p>
+<h3>The target station: multi-step returns</h3>
 <p>So far, every training sample has been a single step — one \((s,a,r,s')\) tuple — so the target contains one real reward plus a bootstrapped guess about everything after. That means reward information moves exactly one link backward per update: the state before the goal learns first, then the state before that, and so on down a long corridor. The fix: store and sample short <em>snippets</em> of \(n\) consecutive steps instead, and build the target from \(n\) real rewards before handing off to the bootstrap:</p>
 <p>$$r_1+\gamma r_2+\cdots+\gamma^{\,n-1} r_n+\gamma^{\,n}\max_{a'}Q(s_{t+n},a')$$</p>
 <p>Now each update moves information \(n\) links at once. The price is variance: more real rewards in the target means more randomness from the environment leaking in. If this dial sounds familiar, it should — it's Volume 1's GAE trade-off, living in the value family:</p>
@@ -275,17 +282,10 @@ svg text{font-family:var(--sans)}
 <figcaption>Ten states, reward only at the ★. Each update pass lets value flow back n links. At n = 1, the start learns the corridor is worth walking after nine passes; at n = 3, three. Bigger n = faster reach, noisier targets.</figcaption>
 </figure>
 
-<div class="handoff">
-<span class="tag">THE PROBLEM WE LEAVE WITH</span>
-<p>Everything so far still predicts a single number — the <em>average</em> return — and still explores by uniform ε-greedy randomness. Two deeper upgrades remain before the family reunion.</p>
-</div>
-</section>
-<section class="chapter" id="ch6">
-<span class="eyebrow">PART 6</span>
-<h2 class="chtitle">Rainbow: Turn Everything On</h2>
-<p class="chdek">Two final upgrades — then the least original, most effective algorithm in the family.</p>
+<figure class="strip"><svg class="loopstrip" viewBox="0 0 640 118" data-conf='[["ACT","ε-greedy",0],["STORE","replay",1],["SAMPLE","prioritized",1],["PREDICT","V + A",1],["TARGET","frozen · double · n-step",2]]'></svg><figcaption>Target rebuilt again: information now travels n links per update.</figcaption></figure>
 
-<h3>Distributional RL: two bets, same mean</h3>
+<p>Three stations in, two red ones left — and they hide the two deepest assumptions in the machine: that a value is a single number, and that exploring means flipping a coin.</p>
+<h3>The prediction station, revisited: Distributional RL</h3>
 <p>Put yourself in one specific moment of Pac-Man. The agent is one tile from a power pellet, and a ghost is closing in from the other side. Consider the action <em>go for the pellet</em>. Two futures genuinely exist: roughly half the time the ghost arrives first and the episode ends — return around 0 — and the other half, the agent grabs the pellet, the ghost turns blue, and a feast follows — return around 20. Every algorithm in this volume compresses that moment into a single number, the expected return: 10. But 10 is a fiction — no actual future is worth 10. Worse, a completely different action with a <em>guaranteed</em> return of 10 — say, safely hoovering dots in a quiet corner — receives exactly the same score. To a mean-predicting network, a coin flip between disaster and triumph and a sure thing are indistinguishable.</p>
 <p><strong>C51</strong> (Bellemare et al., 2017) stops compressing. For each action, the network outputs a full <strong>histogram</strong> of possible returns — concretely, probabilities over 51 fixed return values ("atoms") spanning the value range. The pellet gamble now reads as what it is: half the mass near 0, half near 20. The safe corner reads as one spike at 10. Different situations, finally different predictions. (Why 51? Nothing sacred — a histogram needs bins, 51 worked well empirically, and the name stuck: Categorical, 51 atoms.)</p>
 
@@ -297,13 +297,27 @@ svg text{font-family:var(--sans)}
 
 <p>Training keeps the same Bellman logic, just applied to whole histograms: shift and shrink the next state's predicted histogram by the reward and \(\gamma\), snap it onto the 51 bins, and train the network to match that target with a cross-entropy loss — value learning becomes, in effect, a 51-class classification problem. The projection details are the heart of the original paper (Bellemare, Dabney &amp; Munos, 2017, <em>A Distributional Perspective on Reinforcement Learning</em>), worth a read.</p>
 <p>To be precise about what changes and what doesn't: <em>acting</em> doesn't change — compute each action's mean from its histogram, take the argmax. What changes is the <em>learning problem</em>: the output per action (51 probabilities instead of one number), the target (a histogram instead of a scalar), and the loss (cross-entropy instead of squared error). And why does that help if decisions still use the mean? Because matching a whole shape forces the network to build internal features that can tell the pellet gamble apart from the safe corner — features a mean-only network has no reason to learn, since both actions score 10. Better features generalize better, and the means computed on top of them come out more accurate and more stable. (The precise theory of <em>why</em> this works so well is still being untangled; the effect itself is robust.)</p>
+<figure class="strip"><svg class="loopstrip" viewBox="0 0 640 118" data-conf='[["ACT","ε-greedy",0],["STORE","replay",1],["SAMPLE","prioritized",1],["PREDICT","V + A · distribution",2],["TARGET","frozen · double · n-step",1]]'></svg><figcaption>The prediction station, rebuilt again: shapes instead of single numbers.</figcaption></figure>
+<p>One station left: acting.</p>
 
-<h3>Noisy Nets: exploration you can learn</h3>
-<p><strong>ε-greedy</strong> exploration — act greedily, except with probability ε take a random action — is a mechanism bolted to the outside of the agent: state-blind, uniformly random, annealed by a hand-tuned schedule. <strong>Noisy Nets</strong> (Fortunato et al., 2017) move exploration <em>inside</em>: replace some weights with learned noise distributions, so the network's own uncertainty drives systematic, state-dependent exploration — and as training reduces the noise where confidence is earned, exploration anneals itself, per state, for free.</p>
+<h3>The acting station: Noisy Nets</h3>
+<p>Watch <strong>ε-greedy</strong> exploration — act greedily, except with probability ε take a random action — fail in both directions at once. In a state the agent has mastered, it still lurches at random ε of the time, throwing away reward it knows how to collect. In a state it has never understood, it explores no harder than anywhere else. The dial is state-blind and hand-annealed, bolted to the outside of the agent. <strong>Noisy Nets</strong> (Fortunato et al., 2017) move exploration <em>inside</em>: replace some weights with learned noise distributions, so the network's own uncertainty drives exploration — strong where uncertainty remains, fading where confidence is earned, per state, for free.</p>
+<figure class="strip"><svg class="loopstrip" viewBox="0 0 640 118" data-conf='[["ACT","learned noise",2],["STORE","replay",1],["SAMPLE","prioritized",1],["PREDICT","V + A · distribution",1],["TARGET","frozen · double · n-step",1]]'></svg><figcaption>Every station patched.</figcaption></figure>
 
-<h3>The family reunion</h3>
-<p><strong>Rainbow</strong> (Hessel et al., 2017) asks the obvious question nobody had bothered to answer rigorously: these six patches — double, PER, dueling, multi-step, distributional, noisy — were all developed independently on top of DQN. What happens if you turn them all on at once?</p>
-<p>They stack. Rainbow beat every individual variant on the Atari benchmark, by a wide margin. And the ablations — remove one patch at a time and measure the damage — double as a summary of this whole tutorial:</p>
+<div class="handoff">
+<span class="tag">THE PROBLEM WE LEAVE WITH</span>
+<p>Five patches, five papers — each rebuilt one station of the loop, and each was only ever evaluated on its own. What nobody had measured: the machine with every station switched on at once.</p>
+</div>
+</section>
+<section class="chapter" id="ch6">
+<span class="eyebrow">PART 6</span>
+<h2 class="chtitle">Rainbow: Turn Everything On</h2>
+<p class="chdek">The least original, most effective algorithm in the family.</p>
+
+
+
+<p>Every station is green. <strong>Rainbow</strong> (Hessel et al., 2017) asks the obvious question nobody had bothered to answer rigorously: these six patches — double, PER, dueling, multi-step, distributional, noisy — were all developed independently on top of DQN. What happens if you turn them all on at once?</p>
+<p>They stack. Rainbow beat every individual variant on the Atari benchmark, by a wide margin. And the ablations — unplug one station at a time and measure the damage — double as a summary of this whole tutorial:</p>
 
 <figure>
 <svg id="ablSvg" viewbox="0 0 640 300"></svg>
@@ -480,6 +494,29 @@ s+='<text x="196" y="'+(y+13)+'" text-anchor="end" font-size="12" font-weight="6
 s+='<rect x="208" y="'+y+'" width="'+(d[1]*3.9)+'" height="18" rx="4" fill="'+d[2]+'"/>';
 s+='<text x="'+(212+d[1]*3.9)+'" y="'+(y+13)+'" font-size="11" fill="#8a857b">'+d[1]+'</text>';});
 svg.innerHTML=s;
+}
+
+// ---- Loop strips ----
+{
+document.querySelectorAll('svg.loopstrip').forEach(svg=>{
+const conf=JSON.parse(svg.dataset.conf);
+const n=conf.length,bw=100,gap=(640-40-n*bw)/(n-1),y=32,h=34;
+let s='<text x="20" y="16" font-size="10.5" font-weight="700" fill="#8a857b" letter-spacing="2">THE LOOP</text>';
+conf.forEach((c,i)=>{const x=20+i*(bw+gap);
+const label=c[0],tag=c[1],st=c[2];
+let fill,stroke,txt,sw=1.4;
+if(st===0){fill='#fdeeee';stroke='#ce4747';txt='#b23a3a';}
+else if(st===1){fill='#eafaf3';stroke='#8fc7ad';txt='#3f7d63';}
+else{fill='#0d9268';stroke='#0d9268';txt='#ffffff';sw=2;}
+s+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+h+'" rx="17" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'"/>';
+s+='<text x="'+(x+bw/2)+'" y="'+(y+h/2+4)+'" text-anchor="middle" font-size="11.5" font-weight="700" fill="'+txt+'">'+label+'</text>';
+s+='<text x="'+(x+bw/2)+'" y="'+(y+h+20)+'" text-anchor="middle" font-size="9.5" fill="'+(st===0?'#c96a6a':'#6f6f6f')+'">'+tag+'</text>';
+if(i<n-1){const ax=x+bw+3,axe=x+bw+gap-3;
+s+='<path d="M'+ax+' '+(y+h/2)+' L'+(axe-5)+' '+(y+h/2)+'" stroke="#b9b4aa" stroke-width="1.4"/>';
+s+='<path d="M'+(axe-6)+' '+(y+h/2-4)+' L'+axe+' '+(y+h/2)+' L'+(axe-6)+' '+(y+h/2+4)+' z" fill="#b9b4aa"/>';}
+});
+svg.innerHTML=s;
+});
 }
 
 {
