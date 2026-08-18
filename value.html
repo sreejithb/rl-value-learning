@@ -81,7 +81,7 @@ svg text{font-family:var(--sans)}
 <span class="eyebrow">The Evolution of RL · Volume 2 · single-page edition</span>
 <h1>Nobody Invented Rainbow From Scratch</h1>
 <p class="dek">Volume 1 followed the <strong>policy-learning</strong> family: algorithms that directly learn how to act in each state. This volume follows the other great lineage — <strong>value learning</strong>: estimate what each action is worth in each state, and act by looking up the best estimate. The format is the same: every algorithm is a patch for the previous one's most painful failure, from a lookup table to Rainbow — an algorithm that is, openly, just six patches combined.</p>
-<p class="meta">~30 min read · reads standalone · Volume 1 (the policy lineage): <a href="single.html">REINFORCE → PPO → GRPO</a></p>
+<p class="meta">~30 min read · reads standalone · Volume 1 (the policy lineage): <a href="https://sreejithb.com/rl-policy-gradient/single">REINFORCE → PPO → GRPO</a></p>
 </div>
 <div class="stickybar"><div class="wrap"><div class="lineage" id="strip"><a href="#ch1"><span class="lnode" data-ch="ch1">VALUE LEARNING</span></a><span class="larrow">→</span><a href="#ch2"><span class="lnode" data-ch="ch2">Q-LEARNING</span></a><span class="larrow">→</span><a href="#ch3"><span class="lnode" data-ch="ch3">DQN</span></a><span class="larrow">→</span><a href="#ch4"><span class="lnode" data-ch="ch4">DOUBLE DQN</span></a><span class="larrow">→</span><a href="#ch5"><span class="lnode" data-ch="ch5">THE PATCHES</span></a><span class="larrow">→</span><a href="#ch6"><span class="lnode" data-ch="ch6">RAINBOW</span></a></div></div></div>
 <div class="wrap">
@@ -340,7 +340,7 @@ svg text{font-family:var(--sans)}
 
 <p>Same lesson as Volume 1, from the other family: none of these algorithms fell from the sky. If you remember the problem each was born to solve, you can re-derive the shape of the fix.</p>
 
-<p class="endnote">Where to go from here: this family's superpower — act by argmax — is also its ceiling. When actions are continuous (motor torques, steering angles), there is no menu to take a max over. Solving that requires marrying the two family trees: learn an <em>actor</em> to perform the argmax the critic can't compute. That lineage — DDPG → TD3 → SAC — is Volume 3 material. Meanwhile, this family's inventions never left: replay buffers, target networks, and distributional heads are standard parts in agents far beyond Atari. Missed Volume 1? The policy lineage (REINFORCE → PPO → GRPO) is <a href="single.html">here</a>.</p>
+<p class="endnote">Where to go from here: this family's superpower — act by argmax — is also its ceiling. When actions are continuous (motor torques, steering angles), there is no menu to take a max over. Solving that requires marrying the two family trees: learn an <em>actor</em> to perform the argmax the critic can't compute. That lineage — DDPG → TD3 → SAC — is Volume 3 material. Meanwhile, this family's inventions never left: replay buffers, target networks, and distributional heads are standard parts in agents far beyond Atari. Missed Volume 1? The policy lineage (REINFORCE → PPO → GRPO) is <a href="https://sreejithb.com/rl-policy-gradient/single.html">here</a>.</p>
 </section>
 </div>
 <script>
