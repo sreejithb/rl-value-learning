@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nobody Invented Rainbow From Scratch — The Evolution of RL, Volume 2</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js" onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}]})"></script>
+<style>
+:root{--paper:#ffffff;--ink:#242424;--soft:#6f6f6f;--hair:#e7e4de;--wash:#f7f6f2;--policy:#2b50e0;--reward:#0d9268;--loss:#ce4747;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 20px/1.65 Georgia,"Iowan Old Style",serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:700px;margin:0 auto;padding:0 22px}
+a{color:var(--policy);text-decoration:none}a:hover{text-decoration:underline}
+.eyebrow{font:600 12px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--policy);margin-top:56px;display:block}
+h1{font:800 40px/1.12 var(--sans);letter-spacing:-.022em;margin:14px 0 10px}
+.dek{font-style:italic;color:var(--soft);font-size:21px;margin:0 0 16px}
+.meta{font:400 13px var(--sans);color:var(--soft);padding-bottom:20px;border-bottom:1px solid var(--hair)}
+h2{font:700 27px/1.25 var(--sans);letter-spacing:-.01em;margin:52px 0 12px}
+p{margin:0 0 24px}
+.lineage{display:flex;align-items:center;flex-wrap:wrap;margin:24px 0 6px;font:600 10.5px var(--sans)}
+.lnode{padding:6px 10px;border:1px solid var(--hair);border-radius:999px;color:#b3aea4;letter-spacing:.05em;white-space:nowrap;margin:3px 0}
+.lnode.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.lnode.done{border-color:#cfcac0;color:#8a857b}
+.larrow{color:#c8c3b9;padding:0 6px}
+figure{margin:34px 0;padding:26px 20px;background:var(--wash);border:1px solid var(--hair);border-radius:10px}
+figcaption{font:400 13.5px/1.55 var(--sans);color:var(--soft);margin-top:14px;text-align:center}
+.controls{display:flex;gap:16px;align-items:center;justify-content:center;font:500 13px var(--sans);margin-top:14px;flex-wrap:wrap}
+input[type=range]{accent-color:var(--policy)}
+button.play{font:600 13px var(--sans);background:var(--ink);color:#fff;border:0;border-radius:999px;padding:8px 16px;cursor:pointer}
+button.play:hover{background:#000}
+.seg{display:inline-flex;border:1px solid var(--hair);border-radius:999px;overflow:hidden}
+.seg button{font:600 12.5px var(--sans);border:0;background:#fff;padding:8px 14px;cursor:pointer;color:var(--soft)}
+.seg button.on{background:var(--ink);color:#fff}
+blockquote{margin:34px 0;padding:4px 0 4px 24px;border-left:3px solid var(--ink);font-size:22px;line-height:1.5;font-style:italic}
+.recap{margin:36px 0;border:1px solid var(--hair);border-radius:12px;overflow:hidden;font:400 15.5px/1.55 var(--sans)}
+.recap .row{display:flex;gap:14px;padding:14px 18px;border-bottom:1px solid var(--hair);align-items:baseline}
+.recap .row:last-child{border-bottom:0}
+.recap .who{flex:0 0 118px;font-weight:700;font-size:12.5px;letter-spacing:.06em}
+.recap .fix{color:var(--ink)}
+.recap .prob{color:var(--loss);font-style:italic}
+.navrow{display:flex;justify-content:space-between;gap:12px;margin:54px 0 70px;font:600 15px var(--sans)}
+.navrow a{border:1px solid var(--hair);border-radius:10px;padding:14px 18px;flex:1}
+.navrow a:hover{text-decoration:none;border-color:var(--policy)}
+.navrow .lbl{display:block;font:600 11px var(--sans);letter-spacing:.14em;color:var(--soft);margin-bottom:5px}
+.notation{margin:32px 0;padding:22px 24px;border:1px solid var(--hair);border-radius:10px;background:var(--wash)}
+.notation h4{font:700 11.5px var(--sans);letter-spacing:.16em;margin:0 0 10px;color:var(--soft)}
+.notation ul{list-style:none;margin:0;padding:0;font:400 15.5px/1.6 var(--sans)}
+.notation li{display:flex;gap:14px;padding:6px 0;border-bottom:1px dashed var(--hair)}
+.notation li:last-child{border-bottom:0}
+.notation .sym{flex:0 0 86px;font-weight:600}
+@media(max-width:560px){.notation .sym{flex-basis:70px}}
+.aside{margin:30px 0;padding:18px 22px;background:var(--wash);border:1px solid var(--hair);border-left:4px solid #b9b4aa;border-radius:8px}
+.aside .tag{font:700 10.5px var(--sans);letter-spacing:.16em;color:#8a857b;display:block;margin-bottom:8px}
+.aside p{margin:0;font-size:17px}
+.katex{font-size:1.04em}
+.katex-display{overflow-x:auto;overflow-y:hidden;padding:3px 0}
+svg text{font-family:var(--sans)}
+.endnote{font-style:italic;color:var(--soft);border-top:1px solid var(--hair);padding-top:26px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(max-width:560px){h1{font-size:31px}body{font-size:18px}}
+
+.masthead{margin-top:56px}
+.chapter{margin-top:84px;padding-top:34px;border-top:1px solid var(--hair)}
+.chapter .eyebrow{margin-top:0}
+.chapter h2.chtitle{font:800 33px/1.15 var(--sans);letter-spacing:-.02em;margin:10px 0 8px}
+.chapter .chdek{font-style:italic;color:var(--soft);font-size:19px;margin:0 0 30px}
+.stickybar{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(5px);border-bottom:1px solid var(--hair)}
+.stickybar .lineage{margin:0;padding:10px 0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.stickybar .lineage::-webkit-scrollbar{display:none}
+.stickybar .lnode{margin:0}
+.lineage a{color:inherit}
+.lineage a:hover{text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap masthead">
+<span class="eyebrow">The Evolution of RL · Volume 2 · single-page edition</span>
+<h1>Nobody Invented Rainbow From Scratch</h1>
+<p class="dek">Volume 1 followed the <strong>policy-learning</strong> family: algorithms that directly learn how to act in each state. This volume follows the other great lineage — <strong>value learning</strong>: estimate what each action is worth in each state, and act by looking up the best estimate. The format is the same: every algorithm is a patch for the previous one's most painful failure, from a lookup table to Rainbow — an algorithm that is, openly, just six patches combined.</p>
+<p class="meta">~30 min read · reads standalone · Volume 1 (the policy lineage): <a href="single.html">REINFORCE → PPO → GRPO</a></p>
+</div>
+<div class="stickybar"><div class="wrap"><div class="lineage" id="strip"><a href="#ch1"><span class="lnode" data-ch="ch1">VALUE LEARNING</span></a><span class="larrow">→</span><a href="#ch2"><span class="lnode" data-ch="ch2">Q-LEARNING</span></a><span class="larrow">→</span><a href="#ch3"><span class="lnode" data-ch="ch3">DQN</span></a><span class="larrow">→</span><a href="#ch4"><span class="lnode" data-ch="ch4">DOUBLE DQN</span></a><span class="larrow">→</span><a href="#ch5"><span class="lnode" data-ch="ch5">THE PATCHES</span></a><span class="larrow">→</span><a href="#ch6"><span class="lnode" data-ch="ch6">RAINBOW</span></a></div></div></div>
+<div class="wrap">
+<section class="chapter" id="ch1">
+<span class="eyebrow">PART 1</span>
+<h2 class="chtitle">Value Learning: What Every Action Is Worth</h2>
+<p class="chdek">The value-learning premise: don't parameterize behavior at all. Estimate the value of every action, and derive behavior from the estimates.</p>
+
+<p>Volume 1 covered <strong>policy learning</strong>: algorithms that directly learn how to act in each state, as a policy \(\pi_\theta(a\mid s)\). <strong>Value learning</strong> makes the opposite bet. Suppose that, for every state, you could learn the expected return of taking each action and behaving well afterward — then acting is trivial: look up the best action and take it. That long-term return of action \(a\) in state \(s\) is the <strong>action-value function</strong> \(Q(s,a)\). A scorecard for choices, if you like.</p>
+
+<figure>
+<svg aria-label="Policy as a lookup over Q values" role="img" viewbox="0 0 640 190">
+<rect fill="#fff" height="80" rx="12" stroke="#242424" stroke-width="1.6" width="130" x="30" y="55"></rect>
+<text fill="#242424" font-size="15" font-weight="700" text-anchor="middle" x="95" y="90">state s</text>
+<text fill="#6f6f6f" font-size="11.5" text-anchor="middle" x="95" y="112">what you see</text>
+<g font-size="13">
+<rect fill="#f0efeb" height="30" rx="7" stroke="#d8d4cc" width="150" x="240" y="38"></rect><text fill="#6f6f6f" x="252" y="58">Q(s, left) = 0.4</text>
+<rect fill="#eafaf3" height="30" rx="7" stroke="#0d9268" stroke-width="1.8" width="150" x="240" y="80"></rect><text fill="#0d9268" font-weight="700" x="252" y="100">Q(s, jump) = 2.1 ★</text>
+<rect fill="#f0efeb" height="30" rx="7" stroke="#d8d4cc" width="150" x="240" y="122"></rect><text fill="#6f6f6f" x="252" y="142">Q(s, right) = 1.3</text>
+</g>
+<path d="M162 95 L 236 95" stroke="#8a857b" stroke-width="1.5"></path>
+<path d="M392 95 C 440 95, 450 95, 490 95" stroke="#0d9268" stroke-width="2.2"></path>
+<path d="M486 90 L 496 95 L 486 100 z" fill="#0d9268"></path>
+<text fill="#0d9268" font-size="14" font-weight="700" text-anchor="middle" x="545" y="90">act: jump</text>
+<text fill="#6f6f6f" font-size="11.5" text-anchor="middle" x="545" y="110">policy = argmax</text>
+</svg>
+<figcaption>The whole philosophy in one picture. No policy network, no action probabilities: score every option available to you in a given state, take the best. The entire problem reduces to estimating \(Q^*\) accurately.</figcaption>
+</figure>
+
+<div class="notation">
+<h4>THE CAST OF SYMBOLS — EVERYTHING THIS VOLUME USES</h4>
+<ul>
+<li><span class="sym">\(s,\ a,\ r,\ \gamma\)</span><span>state, action, one-step reward, and the discount factor (≈0.99) — exactly as in Volume 1</span></li>
+<li><span class="sym">\(Q(s,a)\)</span><span>the <strong>action-value</strong>: expected total discounted reward if you take \(a\) in \(s\), then play well afterward</span></li>
+<li><span class="sym">\(Q^*\)</span><span>the true, optimal action-value function — the thing every algorithm here is trying to approximate</span></li>
+<li><span class="sym">\(\alpha\)</span><span>the learning rate: how far each update nudges a score</span></li>
+<li><span class="sym">\(\delta\)</span><span>the <strong>TD error</strong>: the gap between what you predicted and the one-step target — the "surprise" in an experience</span></li>
+<li><span class="sym">\(\theta,\ \theta^{-}\)</span><span>the weights of the online network and its frozen <strong>target-network</strong> copy — arrive in Part 3</span></li>
+<li><span class="sym">\(\varepsilon\)</span><span>the exploration rate in ε-greedy: the fraction of actions taken at random</span></li>
+<li><span class="sym">\(n\)</span><span>the multi-step lookahead length — arrives in Part 5</span></li>
+</ul>
+</div>
+
+<p>The rest of this volume is one long attempt to learn that function well: first with a table, then with a neural network, then with six increasingly targeted patches.</p>
+</section>
+<section class="chapter" id="ch2">
+<span class="eyebrow">PART 2</span>
+<h2 class="chtitle">Learning the Table: Tabular Q-Learning</h2>
+<p class="chdek">Before neural networks: one table, one update rule, and a convergence guarantee.</p>
+
+<p>Imagine a 5×7 gridworld — 35 states the agent can be in — where the agent can move in any of four directions: four actions per state. Following the motivation above, what you need to learn is a 35 × 4 table of \(Q^*(s,a)\) values, so you can look up the best action in every state. Which immediately raises a fair question:</p>
+<p>How can you learn scores about the future without waiting for the future? This is where the <strong>Bellman equation</strong> comes in — the same move that powered all of Volume 1's bootstrapping. Richard Bellman noticed that correct action-values have to be <em>self-consistent</em>: the value of doing \(a\) now must equal the reward you get immediately, plus — discounted by \(\gamma\) — everything you'll collect if you behave optimally afterward, which here means always picking the best action from then on based on the value function, no second-guessing.</p>
+<p>$$Q^*(s,a)\;=\;\mathbb{E}\big[\,r+\gamma \max_{a'} Q^*(s',a')\,\big]$$</p>
+<p>That self-consistency is the whole trick: you can check a score without seeing the future. One step of experience, plus the scorecard itself, is enough.</p>
+<p><strong>Q-learning</strong> (Watkins, 1989) turns that consistency check into an algorithm: maintain a table of Q-values, act in the world, and after every step nudge the entry you used toward the one-step target:</p>
+<p>$$Q(s,a)\;\leftarrow\;Q(s,a)+\alpha\,\underbrace{\big[\,r+\gamma \max_{a'}Q(s',a')-Q(s,a)\,\big]}_{\delta,\ \text{the surprise}}$$</p>
+<p>The bracket is the <strong>temporal-difference (TD) error</strong> \(\delta\): how wrong your estimate just proved to be. Positive surprise, nudge the score up. Negative, nudge it down. Reward information ripples backward through the table, one bootstrap at a time — watch it happen:</p>
+
+<figure>
+<svg id="gwSvg" viewBox="0 0 530 512"></svg>
+<div class="controls"><button class="play" id="gwTrain">Train 25 more episodes</button><button class="play" id="gwReset" style="background:#8a857b">Reset</button><span id="gwCount" style="font-family:var(--mono)">episodes: 0</span></div>
+<figcaption>Tabular Q-learning in a gridworld. The only reward is the ★. Green shading is each cell's best score; arrows are the greedy policy. Click Train a few times: value ripples backward from the goal, and a policy crystallizes out of nothing but scores. Dark cells are walls. The lower chart tracks the table's mean error against the true \(Q^*\) (computable exactly for a world this small) — watch it fall as episodes accumulate.</figcaption>
+</figure>
+
+<p>Two properties of this loop matter later. First, with a table and enough exploration, it <em>provably converges</em> to \(Q^*\) (I'll let you look up the proof yourself). Second — remember this one — look at the \(\max\) in the target: Q-learning learns the value of the <em>greedy</em> policy no matter how sloppily you behave while collecting experience. It is <strong>off-policy</strong>: old experience, exploratory experience, even someone else's experience — all of it remains valid training data.</p>
+<p>So are we done?</p>
+
+<div class="handoff">
+<span class="tag">THE PROBLEM WE LEAVE WITH</span>
+<p>A table needs one row per state — fine for gridworlds, hopeless for anything practical. An Atari screen has more possible states than there are atoms in the universe, and a table can't generalize: two frames differing by one pixel are total strangers to it. We need a function that <em>generalizes</em>, not a table that memorizes. And a table assumes you can even <em>enumerate</em> its rows: with continuous states (a robot arm's joint angles, a car's speed) or continuous actions (how hard to press the accelerator), there is no finite table to write down at all.</p>
+</div>
+</section>
+<section class="chapter" id="ch3">
+<span class="eyebrow">PART 3</span>
+<h2 class="chtitle">DQN: Surviving a Neural Network</h2>
+<p class="chdek">Swap the table for a network and training explodes. Two structural fixes tamed it — and started the deep RL era.</p>
+
+<p>The obvious move: replace the table with a neural network \(Q_\theta(s,a)\) that maps raw pixels to scores, and train it by regression toward the same one-step targets as the tabular approach. People tried versions of this for years, and it kept failing the same way: training <em>diverges</em> — values blow up or collapse. Theorists even named the failure: the <strong>deadly triad</strong> of function approximation, bootstrapping, and off-policy learning. Concretely, two things go wrong.</p>
+<p><strong>1. The data is correlated.</strong> An agent's experience arrives as a stream, and consecutive frames are nearly identical. Stochastic gradient descent — the workhorse that trains neural networks — assumes shuffled, roughly independent samples (recall how you shuffle the training images when training an image classifier). Feed it an hour of highly correlated frames and the network overfits whatever happened in the last minute while quietly forgetting everything else.</p>
+<p><strong>2. You're regressing toward a moving target.</strong> Look at the label: \(r+\gamma\max_{a'}Q_\theta(s',a')\). The network being trained is <em>inside its own target</em>, so every gradient step moves the target itself. Imagine training a classifier to tell cats from dogs, except every update also changes the labels on your training images.</p>
+
+<p><strong>DQN</strong> (Mnih et al., 2013; the 2015 <em>Nature</em> version) tamed both these issues with two structural fixes:</p>
+<p><strong>Fix 1 — experience replay.</strong> Don't train on the stream. Act in the environment — move around the gridworld, play the Atari game, whatever the task is — and store every transition \((s,a,r,s')\) in a big buffer; train on <em>random minibatches</em> drawn from it. Randomizing across a million timesteps breaks the correlation, and every experience gets reused many times. This brings deep RL training much closer to ordinary supervised learning on a shuffled dataset.</p>
+<figure>
+<svg viewBox="0 0 640 260" role="img" aria-label="Experience replay: correlated stream, randomly sampled minibatch">
+<text x="30" y="28" font-size="12.5" font-weight="600" fill="#6f6f6f">the stream, in time order — one color per episode (heavily correlated)</text>
+<rect x="30" y="46" width="29" height="29" rx="5" fill="hsl(212,60%,55%)"/><rect x="63" y="46" width="29" height="29" rx="5" fill="hsl(212,60%,55%)"/><rect x="96" y="46" width="29" height="29" rx="5" fill="hsl(212,60%,55%)"/><rect x="129" y="46" width="29" height="29" rx="5" fill="hsl(212,60%,55%)"/><rect x="162" y="46" width="29" height="29" rx="5" fill="hsl(212,60%,55%)"/><rect x="195" y="46" width="29" height="29" rx="5" fill="hsl(212,60%,55%)"/><rect x="228" y="46" width="29" height="29" rx="5" fill="hsl(25,60%,55%)"/><rect x="261" y="46" width="29" height="29" rx="5" fill="hsl(25,60%,55%)"/><rect x="294" y="46" width="29" height="29" rx="5" fill="hsl(25,60%,55%)"/><rect x="327" y="46" width="29" height="29" rx="5" fill="hsl(25,60%,55%)"/><rect x="360" y="46" width="29" height="29" rx="5" fill="hsl(25,60%,55%)"/><rect x="393" y="46" width="29" height="29" rx="5" fill="hsl(25,60%,55%)"/><rect x="426" y="46" width="29" height="29" rx="5" fill="hsl(25,60%,55%)"/><rect x="459" y="46" width="29" height="29" rx="5" fill="hsl(140,60%,55%)"/><rect x="492" y="46" width="29" height="29" rx="5" fill="hsl(140,60%,55%)"/><rect x="525" y="46" width="29" height="29" rx="5" fill="hsl(140,60%,55%)"/><rect x="558" y="46" width="29" height="29" rx="5" fill="hsl(140,60%,55%)"/><rect x="591" y="46" width="29" height="29" rx="5" fill="hsl(140,60%,55%)"/>
+<path d="M30 82 L30 88 L224 88 L224 82" fill="none" stroke="#b9b4aa" stroke-width="1.2"/><text x="127.0" y="104" text-anchor="middle" font-size="11" fill="#8a857b">episode 1</text><path d="M228 82 L228 88 L455 88 L455 82" fill="none" stroke="#b9b4aa" stroke-width="1.2"/><text x="341.5" y="104" text-anchor="middle" font-size="11" fill="#8a857b">episode 2</text><path d="M459 82 L459 88 L620 88 L620 82" fill="none" stroke="#b9b4aa" stroke-width="1.2"/><text x="539.5" y="104" text-anchor="middle" font-size="11" fill="#8a857b">episode 3</text>
+<path d="M276 108 C 276 150, 160 158, 160 192" fill="none" stroke="#c9c4b9" stroke-width="1.1"/><path d="M78 108 C 78 150, 228 158, 228 192" fill="none" stroke="#c9c4b9" stroke-width="1.1"/><path d="M506 108 C 506 150, 296 158, 296 192" fill="none" stroke="#c9c4b9" stroke-width="1.1"/><path d="M176 108 C 176 150, 364 158, 364 192" fill="none" stroke="#c9c4b9" stroke-width="1.1"/><path d="M572 108 C 572 150, 432 158, 432 192" fill="none" stroke="#c9c4b9" stroke-width="1.1"/><path d="M408 108 C 408 150, 500 158, 500 192" fill="none" stroke="#c9c4b9" stroke-width="1.1"/>
+<rect x="139" y="196" width="42" height="32" rx="6" fill="hsl(25,60%,55%)" stroke="#242424" stroke-width="1.2"/><rect x="207" y="196" width="42" height="32" rx="6" fill="hsl(212,60%,55%)" stroke="#242424" stroke-width="1.2"/><rect x="275" y="196" width="42" height="32" rx="6" fill="hsl(140,60%,55%)" stroke="#242424" stroke-width="1.2"/><rect x="343" y="196" width="42" height="32" rx="6" fill="hsl(212,60%,55%)" stroke="#242424" stroke-width="1.2"/><rect x="411" y="196" width="42" height="32" rx="6" fill="hsl(140,60%,55%)" stroke="#242424" stroke-width="1.2"/><rect x="479" y="196" width="42" height="32" rx="6" fill="hsl(25,60%,55%)" stroke="#242424" stroke-width="1.2"/>
+<text x="320" y="252" text-anchor="middle" font-size="12.5" font-weight="600" fill="#6f6f6f">one training minibatch: 6 transitions drawn from random points across the whole history</text>
+</svg>
+<figcaption>Experience replay as a picture. Experience arrives in long same-colored runs; a minibatch samples from random positions across the entire buffer, so the network trains on a well-shuffled mix of old and new — exactly what SGD wants.</figcaption>
+</figure>
+
+<div class="aside"><span class="tag">GOOD TO KNOW</span>
+<p>How does the agent act while it fills the buffer? In the original paper: <strong>ε-greedily with respect to its current network</strong> — mostly its own best guess, occasionally a random action — with ε annealed from 1.0 down to 0.1 over training. The freedom off-policy learning buys is not that behavior doesn't matter (you still need to explore); it's that the <em>update</em> stays valid no matter which policy generated the data. Old memories came from an older, worse policy, and Q-learning doesn't care. Compare Volume 1, where the on-policy family's data <em>expired with every update</em>: replay is precisely the trick they couldn't use — a payoff of the off-policy property from Part 2.</p></div>
+<p><strong>Fix 2 — the target network.</strong> Keep a frozen copy of the network, \(\theta^-\), and compute the labels with <em>it</em>. Sync the copy every few thousand steps. Now you're regressing toward a fixed target that only jumps periodically:</p>
+<p>$$L(\theta)\;=\;\mathbb{E}\Big[\big(\,r+\gamma \max_{a'} Q_{\theta^-}(s',a')-Q_\theta(s,a)\,\big)^2\Big]$$</p>
+
+<p>With these two fixes, one architecture learned 49 different Atari games from raw pixels — same network, same hyperparameters, many games at superhuman level.</p>
+<blockquote>That 2015 result is why deep RL exists as a field.</blockquote>
+<p>But the value estimates a trained DQN reports have a problem: they are systematically <em>inflated</em>. Think about where its training labels come from: the target network's own imperfect Q-estimates — and, crucially, a \(\max\) over them. If any action's value happens to be overestimated, even slightly, the max picks <em>that</em> one, and its too-high number becomes the label the network is regressed toward. Optimism isn't averaged out; it's selected for, action by action, update by update.</p>
+
+<div class="handoff">
+<span class="tag">THE PROBLEM WE LEAVE WITH</span>
+<p>The max in DQN's target doesn't just read the noisy estimates — it systematically selects the most inflated one and trains on it. How bad is that in practice, and what do you do about it?</p>
+</div>
+</section>
+<section class="chapter" id="ch4">
+<span class="eyebrow">PART 4</span>
+<h2 class="chtitle">Double DQN: Fixing Maximization Bias</h2>
+<p class="chdek">A max over imperfect estimates is not an estimate of the max — and bootstrapping compounds the error.</p>
+
+<p>A network's Q-estimates always carry some <strong>error</strong> — it has limited capacity, it generalizes from similar states, and it has only ever seen finite data. So at any state, some actions' estimates sit a little above their true values and some a little below. And the \(\max\) is not neutral about those errors: it never picks an action whose estimate is accidentally low, and it eagerly picks the one whose estimate is accidentally high. Taking \(\max_{a'}Q(s',a')\) doesn't select the best action — it selects the most <em>overestimated</em> one. Statisticians call this the winner's curse; in RL it's known as <strong>maximization bias</strong>.</p>
+<p>In Q-learning it's a feedback loop: today's inflated max becomes tomorrow's regression label, which inflates other estimates, whose maxes inflate the next labels. Optimism compounds through the bootstrap chain.</p>
+<p><strong>Double DQN</strong> (van Hasselt et al., 2015) attacks the bias at its source: <em>never let the same errors both nominate and score</em> — where <em>nominating</em> means picking which action looks best (the argmax), and <em>scoring</em> means supplying that action's value for the label. Use one network to nominate, and a different network to score. DQN conveniently already has two networks lying around — online and target — so split the roles: the online network chooses, the target network evaluates.</p>
+<p>Why does that kill the bias? The two networks are snapshots from different points in training, so their errors differ. The online network's most overestimated action is just an ordinary action to the target network — the odds that <em>both</em> networks independently overestimate the <em>same</em> action are low, so the value that actually enters the label is roughly honest. Two judges rarely make the same mistake.</p>
+<p>And doesn't putting \(Q_\theta\) back in the target reintroduce the moving-target problem from Part 3? Barely — look at <em>what</em> moves. The online network now only chooses an <em>index</em> (which action); the <em>number</em> still comes from the frozen target network. A target whose value occasionally switches between actions is far gentler than one whose values shift under every gradient step, and in practice stability is unaffected. Seen that way, Double DQN changes nothing about what is learned or how the agent behaves — it only changes <em>which action's value gets read off</em> inside the label.</p>
+<p>Side by side — one symbol changes, namely who does the choosing:</p>
+<p>$$\text{DQN target:}\qquad r+\gamma\,Q_{\theta^-}\!\big(s',\;\arg\max_{a'}\,\textcolor{#ce4747}{Q_{\theta^-}}(s',a')\big)$$</p>
+<p>$$\text{Double DQN target:}\qquad r+\gamma\,Q_{\theta^-}\!\big(s',\;\arg\max_{a'}\,\textcolor{#2b50e0}{Q_{\theta}}(s',a')\big)$$</p>
+<p>It is close to a one-line code change, it costs nothing, and it makes the value estimates measurably more accurate — and the play measurably better.</p>
+
+<div class="handoff">
+<span class="tag">THE PROBLEM WE LEAVE WITH</span>
+<p>The estimates are honest now, but the machine is still wasteful in three separate ways. One: it replays every memory equally often, whether or not it has anything left to teach. Two: it relearns "this situation is good" separately for every action. Three: reward information crawls backward one link per update. Three wastes, three patches.</p>
+</div>
+</section>
+<section class="chapter" id="ch5">
+<span class="eyebrow">PART 5</span>
+<h2 class="chtitle">The Patch Era</h2>
+<p class="chdek">Double DQN fixed what the machine believes. The next three patches fix how it spends its effort: which memories it learns from, what its network has to relearn, and how far each update reaches.</p>
+
+<p>(Why one chapter for three algorithms? Because none of them changes what the algorithm <em>is</em> — each keeps DQN's loop and upgrades one component. That independence is exactly what will let the finale turn them all on at once.)</p>
+
+<h3>Which memories: Prioritized Experience Replay</h3>
+<p>So far, every \((s,a,r,s')\) is sampled uniformly from the buffer. Uniform replay treats each transition identically, but most of an agent's experience has nothing left to teach — the useful gradient lives in the rare moments where the value estimate was badly wrong. It's the difference between rereading the whole textbook front to back and drilling the flashcards you keep getting wrong. Conveniently, Q-learning already computes "how wrong was I" on every single step: the TD error \(\delta\). So sample in proportion to it. <strong>Prioritized Experience Replay</strong> (Schaul et al., 2015) replays transitions with probability proportional to their surprise, spending updates where predictions failed. (Non-uniform sampling skews the statistics, so each sample carries a small importance weight to keep the math honest.)</p>
+
+<figure>
+<svg id="perSvg" viewbox="0 0 640 260"></svg>
+<div class="controls"><span class="seg"><button class="on" id="perU">uniform replay</button><button id="perP">prioritized replay</button></span><button class="play" id="perRun">Draw 60 samples</button></div>
+<figcaption>Twelve stored transitions; gray bar = each one's surprise |δ|. Orange shows how often each gets replayed. Uniform sampling wastes most draws on transitions with nothing left to teach; prioritized sampling pours updates into the surprises.</figcaption>
+</figure>
+
+<h3>What gets relearned: Dueling networks</h3>
+<p>Watch plain DQN fail at something that should be easy. The agent discovers a lucrative state it has only ever tried one action in — it always happened to go left there. It has learned that \(Q(s,\text{left})\) is high… and it believes nothing about the other actions in that state. That should strike you as wasteful: most of that value plainly belongs to the <em>state</em> — being there is what's good — not to the particular choice of going left. But a plain Q-network has no way to say so. Each action's value is a separate output, so "this situation is good" must be relearned separately for every action, from experiences where that specific action was tried.</p>
+<p>The waste is structural. \(Q(s,a)\) entangles two different quantities: how good the <em>situation</em> is regardless of what you do — the state value \(V(s)\) from Volume 1 — and how much your particular <em>choice</em> adds or subtracts on top, the advantage \(A(s,a)\). And in most states the second part is tiny: cruising an empty highway, every reasonable action leads to roughly the same future, so all the Q-values are one big shared number plus small differences. Only occasionally — a car swerving into your lane — does the choice dominate.</p>
+<p>The <strong>dueling architecture</strong> (Wang et al., 2015) builds that decomposition into the network itself: one stream estimates \(V(s)\), another estimates \(A(s,a)\), and they recombine into \(Q = V + A\). Now the failure above disappears: the single left-visit raises \(V(s)\), so <em>every</em> action's estimate in that state starts out sensible, and only the small differences remain to be learned — the shared part is learned once, not once per action. (The advantage stream is centered so the two streams can't trade off against each other.) In the paper's Atari saliency maps you can watch the division of labor: the V stream stares at the horizon, and the A stream only wakes up when other cars get close.</p>
+
+<figure>
+<svg aria-label="Dueling network architecture" role="img" viewbox="0 0 660 300">
+<defs><marker id="dm" markerheight="6.5" markerwidth="6.5" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0,0 L10,5 L0,10 z" fill="#8a857b"></path></marker></defs>
+<rect fill="#fff" height="70" rx="12" stroke="#242424" stroke-width="1.6" width="105" x="28" y="115"></rect>
+<text font-size="14" font-weight="700" text-anchor="middle" x="80" y="145">pixels</text>
+<text fill="#6f6f6f" font-size="11" text-anchor="middle" x="80" y="166">state s</text>
+<rect fill="#f0efeb" height="70" rx="12" stroke="#8a857b" width="110" x="185" y="115"></rect>
+<text fill="#4a463f" font-size="14" font-weight="700" text-anchor="middle" x="240" y="145">shared</text>
+<text fill="#6f6f6f" font-size="11" text-anchor="middle" x="240" y="166">conv trunk</text>
+<rect fill="#eafaf3" height="58" rx="12" stroke="#0d9268" stroke-width="1.6" width="130" x="360" y="42"></rect>
+<text fill="#0d9268" font-size="13.5" font-weight="700" text-anchor="middle" x="425" y="67">V(s) stream</text>
+<text fill="#4d8f76" font-size="11" text-anchor="middle" x="425" y="87">"how good is here?"</text>
+<rect fill="#eef1ff" height="58" rx="12" stroke="#2b50e0" stroke-width="1.6" width="130" x="360" y="200"></rect>
+<text fill="#2b50e0" font-size="13.5" font-weight="700" text-anchor="middle" x="425" y="225">A(s,a) stream</text>
+<text fill="#5a6bb0" font-size="11" text-anchor="middle" x="425" y="245">"which action matters?"</text>
+<circle cx="555" cy="150" fill="#fff" r="20" stroke="#242424" stroke-width="1.6"></circle>
+<text font-size="17" font-weight="700" text-anchor="middle" x="555" y="156">+</text>
+<text font-size="14" font-weight="700" text-anchor="middle" x="622" y="145">Q</text>
+<text fill="#6f6f6f" font-size="10.5" text-anchor="middle" x="622" y="163">(s,a)</text>
+<path d="M135 150 L 182 150" fill="none" id="dp1" marker-end="url(#dm)" stroke="#8a857b" stroke-width="1.5"></path>
+<path d="M297 132 C 325 110, 335 90, 357 74" fill="none" id="dp2" marker-end="url(#dm)" stroke="#8a857b" stroke-width="1.5"></path>
+<path d="M297 168 C 325 190, 335 210, 357 226" fill="none" id="dp3" marker-end="url(#dm)" stroke="#8a857b" stroke-width="1.5"></path>
+<path d="M492 72 C 525 90, 535 110, 548 130" fill="none" id="dp4" marker-end="url(#dm)" stroke="#8a857b" stroke-width="1.5"></path>
+<path d="M492 228 C 525 210, 535 190, 548 170" fill="none" id="dp5" marker-end="url(#dm)" stroke="#8a857b" stroke-width="1.5"></path>
+<path d="M577 150 L 600 150" fill="none" marker-end="url(#dm)" stroke="#8a857b" stroke-width="1.5"></path>
+<circle fill="#8a857b" r="4"><animatemotion dur="2.8s" repeatcount="indefinite"><mpath href="#dp1"></mpath></animatemotion></circle>
+<circle fill="#0d9268" r="4"><animatemotion begin="0.7s" dur="2.8s" repeatcount="indefinite"><mpath href="#dp2"></mpath></animatemotion></circle>
+<circle fill="#2b50e0" r="4"><animatemotion begin="0.7s" dur="2.8s" repeatcount="indefinite"><mpath href="#dp3"></mpath></animatemotion></circle>
+<circle fill="#0d9268" r="4"><animatemotion begin="1.5s" dur="2.8s" repeatcount="indefinite"><mpath href="#dp4"></mpath></animatemotion></circle>
+<circle fill="#2b50e0" r="4"><animatemotion begin="1.5s" dur="2.8s" repeatcount="indefinite"><mpath href="#dp5"></mpath></animatemotion></circle>
+</svg>
+<figcaption>One network, two questions. The V stream learns "this state is good" once; the A stream only has to learn how actions differ. Sound familiar? It's Volume 1's value/advantage split, rediscovered inside a value method's architecture.</figcaption>
+</figure>
+
+<h3>How far updates reach: multi-step targets</h3>
+<p>So far, every training sample has been a single step — one \((s,a,r,s')\) tuple — so the target contains one real reward plus a bootstrapped guess about everything after. That means reward information moves exactly one link backward per update: the state before the goal learns first, then the state before that, and so on down a long corridor. The fix: store and sample short <em>snippets</em> of \(n\) consecutive steps instead, and build the target from \(n\) real rewards before handing off to the bootstrap:</p>
+<p>$$r_1+\gamma r_2+\cdots+\gamma^{\,n-1} r_n+\gamma^{\,n}\max_{a'}Q(s_{t+n},a')$$</p>
+<p>Now each update moves information \(n\) links at once. The price is variance: more real rewards in the target means more randomness from the environment leaking in. If this dial sounds familiar, it should — it's Volume 1's GAE trade-off, living in the value family:</p>
+
+<figure>
+<svg id="nsSvg" viewbox="0 0 640 190"></svg>
+<div class="controls"><label>lookahead n <input id="nsN" max="5" min="1" step="1" type="range" value="1"/></label><span id="nsNVal" style="font-family:var(--mono)">n = 1</span><button class="play" id="nsAuto">Update until value reaches start</button><button class="play" id="nsReset" style="background:#8a857b">Reset</button></div>
+<figcaption>Ten states, reward only at the ★. Each update pass lets value flow back n links. At n = 1, the start learns the corridor is worth walking after nine passes; at n = 3, three. Bigger n = faster reach, noisier targets.</figcaption>
+</figure>
+
+<div class="handoff">
+<span class="tag">THE PROBLEM WE LEAVE WITH</span>
+<p>Everything so far still predicts a single number — the <em>average</em> return — and still explores by uniform ε-greedy randomness. Two deeper upgrades remain before the family reunion.</p>
+</div>
+</section>
+<section class="chapter" id="ch6">
+<span class="eyebrow">PART 6</span>
+<h2 class="chtitle">Rainbow: Turn Everything On</h2>
+<p class="chdek">Two final upgrades — then the least original, most effective algorithm in the family.</p>
+
+<h3>Distributional RL: two bets, same mean</h3>
+<p>Put yourself in one specific moment of Pac-Man. The agent is one tile from a power pellet, and a ghost is closing in from the other side. Consider the action <em>go for the pellet</em>. Two futures genuinely exist: roughly half the time the ghost arrives first and the episode ends — return around 0 — and the other half, the agent grabs the pellet, the ghost turns blue, and a feast follows — return around 20. Every algorithm in this volume compresses that moment into a single number, the expected return: 10. But 10 is a fiction — no actual future is worth 10. Worse, a completely different action with a <em>guaranteed</em> return of 10 — say, safely hoovering dots in a quiet corner — receives exactly the same score. To a mean-predicting network, a coin flip between disaster and triumph and a sure thing are indistinguishable.</p>
+<p><strong>C51</strong> (Bellemare et al., 2017) stops compressing. For each action, the network outputs a full <strong>histogram</strong> of possible returns — concretely, probabilities over 51 fixed return values ("atoms") spanning the value range. The pellet gamble now reads as what it is: half the mass near 0, half near 20. The safe corner reads as one spike at 10. Different situations, finally different predictions. (Why 51? Nothing sacred — a histogram needs bins, 51 worked well empirically, and the name stuck: Categorical, 51 atoms.)</p>
+
+<figure>
+<svg id="dsSvg" viewbox="0 0 640 250"></svg>
+<div class="controls"><span class="seg"><button class="on" id="dsMean">what DQN sees (means)</button><button id="dsDist">what C51 sees (distributions)</button></span></div>
+<figcaption>The Pac-Man moment as the network sees it. Both actions have mean 10 — to a mean-predicting network they are the same action. The distributional view shows one is a sure thing and the other a coin flip between 0 and 20: exactly the difference the network can now learn.</figcaption>
+</figure>
+
+<p>Training keeps the same Bellman logic, just applied to whole histograms: shift and shrink the next state's predicted histogram by the reward and \(\gamma\), snap it onto the 51 bins, and train the network to match that target with a cross-entropy loss — value learning becomes, in effect, a 51-class classification problem. The projection details are the heart of the original paper (Bellemare, Dabney &amp; Munos, 2017, <em>A Distributional Perspective on Reinforcement Learning</em>), worth a read.</p>
+<p>To be precise about what changes and what doesn't: <em>acting</em> doesn't change — compute each action's mean from its histogram, take the argmax. What changes is the <em>learning problem</em>: the output per action (51 probabilities instead of one number), the target (a histogram instead of a scalar), and the loss (cross-entropy instead of squared error). And why does that help if decisions still use the mean? Because matching a whole shape forces the network to build internal features that can tell the pellet gamble apart from the safe corner — features a mean-only network has no reason to learn, since both actions score 10. Better features generalize better, and the means computed on top of them come out more accurate and more stable. (The precise theory of <em>why</em> this works so well is still being untangled; the effect itself is robust.)</p>
+
+<h3>Noisy Nets: exploration you can learn</h3>
+<p><strong>ε-greedy</strong> exploration — act greedily, except with probability ε take a random action — is a mechanism bolted to the outside of the agent: state-blind, uniformly random, annealed by a hand-tuned schedule. <strong>Noisy Nets</strong> (Fortunato et al., 2017) move exploration <em>inside</em>: replace some weights with learned noise distributions, so the network's own uncertainty drives systematic, state-dependent exploration — and as training reduces the noise where confidence is earned, exploration anneals itself, per state, for free.</p>
+
+<h3>The family reunion</h3>
+<p><strong>Rainbow</strong> (Hessel et al., 2017) asks the obvious question nobody had bothered to answer rigorously: these six patches — double, PER, dueling, multi-step, distributional, noisy — were all developed independently on top of DQN. What happens if you turn them all on at once?</p>
+<p>They stack. Rainbow beat every individual variant on the Atari benchmark, by a wide margin. And the ablations — remove one patch at a time and measure the damage — double as a summary of this whole tutorial:</p>
+
+<figure>
+<svg id="ablSvg" viewbox="0 0 640 300"></svg>
+<figcaption>Schematic of Rainbow's ablations (relative ordering per Hessel et al., 2018; median human-normalized Atari score). Removing multi-step targets, prioritized replay, or the distributional head hurts most; double Q-learning matters least once the distributional head is present. Every bar is a chapter of this tutorial.</figcaption>
+</figure>
+
+<p>Notice what Rainbow <em>is</em>. It contains no new idea whatsoever — and that's precisely the point. Nobody invented Rainbow from scratch, and nobody could have: it is six answers to six specific failures, discovered one painful problem at a time over four years. The name isn't decoration. It's an admission.</p>
+
+<h3>The whole story in one breath</h3>
+<div class="recap">
+<div class="row"><span class="who">Q-LEARNING</span><span class="fix">Learn a table of action-values; after each step, nudge toward reward + best next value. Off-policy: any experience is valid. <span class="prob">Problem: tables can't scale and can't generalize.</span></span></div>
+<div class="row"><span class="who">DQN</span><span class="fix">Swap in a neural network; tame the deadly triad with experience replay + a frozen target network. <span class="prob">Problem: the max inflates every estimate.</span></span></div>
+<div class="row"><span class="who">DOUBLE DQN</span><span class="fix">One network nominates the action, the other scores it — an error can't pick itself and grade itself. <span class="prob">Problem: learning is still indiscriminate and slow.</span></span></div>
+<div class="row"><span class="who">PER</span><span class="fix">Replay surprising transitions more often — spend updates where predictions failed.</span></div>
+<div class="row"><span class="who">DUELING</span><span class="fix">Split the network: learn "state is good" once, "which action matters" separately.</span></div>
+<div class="row"><span class="who">MULTI-STEP</span><span class="fix">Put n real rewards in the target: faster propagation, more variance — GAE's dial, rediscovered. <span class="prob">Problem: still mean-only predictions and ε-greedy exploration.</span></span></div>
+<div class="row"><span class="who">C51 / NOISY</span><span class="fix">Predict the full return distribution; let learned weight-noise drive state-aware exploration.</span></div>
+<div class="row"><span class="who">RAINBOW</span><span class="fix">Turn all six on at once. No new idea — six patches, one agent, state of the art.</span></div>
+</div>
+
+<p>Same lesson as Volume 1, from the other family: none of these algorithms fell from the sky. If you remember the problem each was born to solve, you can re-derive the shape of the fix.</p>
+
+<p class="endnote">Where to go from here: this family's superpower — act by argmax — is also its ceiling. When actions are continuous (motor torques, steering angles), there is no menu to take a max over. Solving that requires marrying the two family trees: learn an <em>actor</em> to perform the argmax the critic can't compute. That lineage — DDPG → TD3 → SAC — is Volume 3 material. Meanwhile, this family's inventions never left: replay buffers, target networks, and distributional heads are standard parts in agents far beyond Atari. Missed Volume 1? The policy lineage (REINFORCE → PPO → GRPO) is <a href="single.html">here</a>.</p>
+</section>
+</div>
+<script>
+// ---- Gridworld Q-learning with error curve ----
+{
+const ROWS=5,COLS=7,GOAL='0,6',WALLS=new Set(['1,2','2,2','3,2','1,4','3,5']);
+const svg=document.getElementById('gwSvg'),cnt=document.getElementById('gwCount');
+const DR=[-1,0,1,0],DC=[0,1,0,-1],AR=['\u25B2','\u25B6','\u25BC','\u25C0'];
+function keys(){const ks=[];for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const k=r+','+c;if(!WALLS.has(k))ks.push(k);}return ks;}
+function step(r,c,a){let nr=r+DR[a],nc=c+DC[a];
+if(nr<0||nr>=ROWS||nc<0||nc>=COLS||WALLS.has(nr+','+nc)){nr=r;nc=c;}
+const done=(nr+','+nc===GOAL);return[nr,nc,done?1:0,done];}
+const QSTAR={};
+(function(){const V={};keys().forEach(k=>V[k]=0);
+for(let it=0;it<200;it++)keys().forEach(k=>{if(k===GOAL)return;
+const[r,c]=k.split(',').map(Number);let best=-1;
+for(let a=0;a<4;a++){const[nr,nc,rew,done]=step(r,c,a);const q=rew+(done?0:0.9*V[nr+','+nc]);if(q>best)best=q;}
+V[k]=best;});
+keys().forEach(k=>{QSTAR[k]=[0,0,0,0];if(k===GOAL)return;const[r,c]=k.split(',').map(Number);
+for(let a=0;a<4;a++){const[nr,nc,rew,done]=step(r,c,a);QSTAR[k][a]=rew+(done?0:0.9*V[nr+','+nc]);}});})();
+let Q={},ep=0,errHist=[];
+function err(){let s=0,n=0;keys().forEach(k=>{if(k===GOAL)return;
+for(let a=0;a<4;a++){s+=Math.abs(Q[k][a]-QSTAR[k][a]);n++;}});return s/n;}
+function reset(){Q={};ep=0;keys().forEach(k=>Q[k]=[0,0,0,0]);errHist=[err()];draw();}
+function episode(){let r,c;
+do{r=Math.floor(Math.random()*ROWS);c=Math.floor(Math.random()*COLS);}while(WALLS.has(r+','+c)||r+','+c===GOAL);
+for(let t=0;t<80;t++){const q=Q[r+','+c];
+const a=Math.random()<0.35?Math.floor(Math.random()*4):q.indexOf(Math.max(...q));
+const[nr,nc,rew,done]=step(r,c,a);
+const tgt=rew+(done?0:0.9*Math.max(...Q[nr+','+nc]));
+q[a]+=0.5*(tgt-q[a]);
+if(done)break;r=nr;c=nc;}}
+function draw(){const CS=74,P=4;let s='';
+for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const x=c*CS+P,y=r*CS+P,k=r+','+c,w=CS-7;
+if(WALLS.has(k)){s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+w+'" rx="7" fill="#403c35"/>';continue;}
+s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+w+'" rx="7" fill="#ffffff" stroke="#ddd9d0"/>';
+if(k===GOAL){s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+w+'" rx="7" fill="#f7c948" opacity=".85"/><text x="'+(x+w/2)+'" y="'+(y+w/2+9)+'" text-anchor="middle" font-size="26">\u2605</text>';continue;}
+const q=Q[k],v=Math.max(...q);
+if(v>0.004){s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+w+'" rx="7" fill="#0d9268" opacity="'+(0.9*Math.min(v,1)).toFixed(3)+'"/>';
+const a=q.indexOf(v);
+s+='<text x="'+(x+w/2)+'" y="'+(y+w/2+2)+'" text-anchor="middle" font-size="19" fill="'+(v>0.45?'#ffffff':'#0d9268')+'">'+AR[a]+'</text>';
+s+='<text x="'+(x+w/2)+'" y="'+(y+w-9)+'" text-anchor="middle" font-size="10" fill="'+(v>0.45?'#e8fff5':'#4d8f76')+'">'+v.toFixed(2)+'</text>';}}
+// error chart
+const cx0=54,cy0=496,cw=452,chh=76,e0=errHist[0]||1;
+s+='<text x="'+cx0+'" y="'+(cy0-chh-12)+'" font-size="12" fill="#6f6f6f">mean |Q \u2212 Q*| across the whole table</text>';
+s+='<line x1="'+cx0+'" y1="'+cy0+'" x2="'+(cx0+cw)+'" y2="'+cy0+'" stroke="#d8d4cc"/>';
+s+='<line x1="'+cx0+'" y1="'+(cy0-chh)+'" x2="'+cx0+'" y2="'+cy0+'" stroke="#d8d4cc"/>';
+s+='<text x="'+cx0+'" y="'+(cy0+15)+'" font-size="10.5" fill="#9a958b">0</text>';
+s+='<text x="'+(cx0+cw/2)+'" y="'+(cy0+15)+'" text-anchor="middle" font-size="10.5" fill="#9a958b">episodes trained</text>';
+if(ep>0)s+='<text x="'+(cx0+cw)+'" y="'+(cy0+15)+'" text-anchor="end" font-size="10.5" fill="#9a958b">'+ep+'</text>';
+let d='';const n=errHist.length;
+for(let i=0;i<n;i++){const x=cx0+(n>1?i/(n-1):0)*cw,y=cy0-(errHist[i]/e0)*chh;
+d+=(i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)+' ';}
+s+='<path d="'+d+'" fill="none" stroke="#2b50e0" stroke-width="2.2"/>';
+const last=errHist[n-1];
+s+='<circle cx="'+(cx0+(n>1?1:0)*cw)+'" cy="'+(cy0-(last/e0)*chh)+'" r="4" fill="#2b50e0"/>';
+s+='<text x="'+(cx0+cw)+'" y="'+(cy0-(last/e0)*chh-10)+'" text-anchor="end" font-size="11.5" fill="#2b50e0" font-weight="600">'+last.toFixed(3)+'</text>';
+cnt.textContent='episodes: '+ep;
+svg.innerHTML=s;}
+document.getElementById('gwTrain').addEventListener('click',()=>{for(let i=0;i<25;i++)episode();ep+=25;
+errHist.push(err());if(errHist.length>60)errHist.shift();draw();});
+document.getElementById('gwReset').addEventListener('click',reset);
+reset();
+}
+// ---- Prioritized replay ----
+{
+const svg=document.getElementById('perSvg');
+const del=[0.12,1.85,0.3,0.2,0.9,0.15,2.3,0.4,0.25,1.25,0.1,0.6];
+const bU=document.getElementById('perU'),bP=document.getElementById('perP');
+let mode='u',counts=new Array(12).fill(0),flash=-1,timer=null;
+bU.onclick=()=>{mode='u';counts.fill(0);bU.classList.add('on');bP.classList.remove('on');draw();};
+bP.onclick=()=>{mode='p';counts.fill(0);bP.classList.add('on');bU.classList.remove('on');draw();};
+const pr=del.map(d=>Math.pow(d,0.7));const prSum=pr.reduce((a,b)=>a+b);
+function pick(){if(mode==='u')return Math.floor(Math.random()*12);
+let r=Math.random()*prSum;for(let i=0;i<12;i++){r-=pr[i];if(r<=0)return i;}return 11;}
+function draw(){const x0=48,bw=26,gap=22,y0=170,sc=52;
+let s='<line x1="'+x0+'" y1="'+y0+'" x2="620" y2="'+y0+'" stroke="#d8d4cc"/>';
+const maxC=Math.max(1,...counts);
+for(let i=0;i<12;i++){const x=x0+8+i*(bw+gap);
+const h=del[i]*sc;
+s+='<rect x="'+x+'" y="'+(y0-h)+'" width="'+bw+'" height="'+h+'" rx="3" fill="'+(i===flash?'#242424':'#c9c4b9')+'"/>';
+s+='<text x="'+(x+bw/2)+'" y="'+(y0-h-6)+'" text-anchor="middle" font-size="9.5" fill="#8a857b">'+del[i].toFixed(1)+'</text>';
+const ch=counts[i]/maxC*46;
+s+='<rect x="'+(x+bw-8)+'" y="'+(y0+26-ch)+'" width="14" height="'+Math.max(ch,1)+'" rx="3" fill="#e8873c" transform="translate(0,26)"/>';
+s+='<text x="'+(x+bw/2)+'" y="'+(y0+66)+'" text-anchor="middle" font-size="10" fill="#b06a2c">'+counts[i]+'</text>';}
+s+='<text x="'+x0+'" y="24" font-size="12.5" fill="#6f6f6f">gray: surprise |\u03B4| of each stored transition \u00B7 orange: times replayed ('+(mode==='u'?'uniform':'prioritized')+')</text>';
+svg.innerHTML=s;}
+document.getElementById('perRun').addEventListener('click',()=>{if(timer)clearInterval(timer);let k=0;
+timer=setInterval(()=>{flash=pick();counts[flash]++;draw();if(++k>=60){clearInterval(timer);timer=null;flash=-1;draw();}},45);});
+draw();
+}
+// ---- n-step propagation ----
+{
+const svg=document.getElementById('nsSvg'),sl=document.getElementById('nsN'),lb=document.getElementById('nsNVal');
+const L=10;let v,updates,timer=null;
+function reset(){if(timer){clearInterval(timer);timer=null;}v=new Array(L).fill(0);v[L-1]=1;updates=0;draw();}
+function pass(){const n=+sl.value,nv=v.slice();
+for(let i=0;i<L-1;i++){let best=v[i];
+for(let k=1;k<=n&&i+k<L;k++)best=Math.max(best,Math.pow(0.92,k)*v[i+k]);
+nv[i]=best;}
+v=nv;updates++;draw();}
+function draw(){lb.textContent='n = '+sl.value;
+let s='';const x0=52,R=22,gap=(568)/(L-1);
+for(let i=0;i<L-1;i++)s+='<line x1="'+(x0+i*gap+R)+'" y1="90" x2="'+(x0+(i+1)*gap-R)+'" y2="90" stroke="#c9c4b9" stroke-width="1.5"/>';
+for(let i=0;i<L;i++){const x=x0+i*gap;
+s+='<circle cx="'+x+'" cy="90" r="'+R+'" fill="#0d9268" opacity="'+(0.06+0.94*v[i]).toFixed(3)+'" stroke="#c9c4b9"/>';
+if(i===L-1)s+='<text x="'+x+'" y="98" text-anchor="middle" font-size="20">\u2605</text>';
+else if(v[i]>0.01)s+='<text x="'+x+'" y="95" text-anchor="middle" font-size="10.5" fill="'+(v[i]>0.4?'#fff':'#0d9268')+'">'+v[i].toFixed(2)+'</text>';}
+s+='<text x="'+x0+'" y="30" font-size="12.5" fill="#6f6f6f">a 10-state corridor \u00B7 reward only at the \u2605</text>';
+s+='<text x="'+x0+'" y="160" font-size="13" font-weight="600" fill="#242424">update passes: '+updates+' \u00B7 value has reached the start: '+(v[0]>0.01?'YES':'not yet')+'</text>';
+svg.innerHTML=s;}
+sl.addEventListener('input',()=>{reset();});
+document.getElementById('nsReset').addEventListener('click',reset);
+document.getElementById('nsAuto').addEventListener('click',()=>{if(timer)return;
+timer=setInterval(()=>{pass();if(v[0]>0.01||updates>=15){clearInterval(timer);timer=null;}},430);});
+reset();
+}
+// ---- Distributional ----
+{
+const svg=document.getElementById('dsSvg');
+const bM=document.getElementById('dsMean'),bD=document.getElementById('dsDist');
+let dist=false;
+bM.onclick=()=>{dist=false;bM.classList.add('on');bD.classList.remove('on');draw();};
+bD.onclick=()=>{dist=true;bD.classList.add('on');bM.classList.remove('on');draw();};
+function panel(x0,title,bars,col){
+let s='<text x="'+(x0+120)+'" y="34" text-anchor="middle" font-size="13.5" font-weight="700" fill="'+col+'">'+title+'</text>';
+s+='<line x1="'+x0+'" y1="190" x2="'+(x0+240)+'" y2="190" stroke="#d8d4cc"/>';
+[[0,'0'],[1,'10'],[2,'20']].forEach(([t,tl])=>{const x=x0+30+t*90;
+s+='<line x1="'+x+'" y1="187" x2="'+x+'" y2="193" stroke="#b9b4aa"/><text x="'+x+'" y="208" text-anchor="middle" font-size="10.5" fill="#9a958b">'+tl+'</text>';});
+bars.forEach(b=>{const x=x0+30+b[0]*90,h=b[1]*120;
+s+='<rect x="'+(x-14)+'" y="'+(190-h)+'" width="28" height="'+h+'" rx="4" fill="'+col+'" opacity=".85"/>';
+s+='<text x="'+x+'" y="'+(190-h-7)+'" text-anchor="middle" font-size="10.5" fill="'+col+'">'+(b[1]*100)+'%</text>';});
+return s;}
+function draw(){let s='';
+if(!dist){s+=panel(60,'safe corner \u00B7 mean 10',[[1,1]],'#0d9268');
+s+=panel(360,'go for the pellet \u00B7 mean 10',[[1,1]],'#2b50e0');
+s+='<text x="320" y="238" text-anchor="middle" font-size="12.5" font-weight="600" fill="#ce4747">identical. the network cannot tell them apart.</text>';}
+else{s+=panel(60,'safe corner \u00B7 a sure 10',[[1,1]],'#0d9268');
+s+=panel(360,'go for the pellet \u00B7 0 or 20',[[0,0.5],[2,0.5]],'#2b50e0');
+s+='<text x="320" y="238" text-anchor="middle" font-size="12.5" font-weight="600" fill="#0d9268">same mean, different worlds \u2014 and now the network can learn the difference.</text>';}
+svg.innerHTML=s;}
+draw();
+}
+// ---- Rainbow ablations ----
+{
+const svg=document.getElementById('ablSvg');
+const data=[['Rainbow (all six on)',100,'#242424'],['\u2212 double',94,'#8a857b'],['\u2212 dueling',91,'#8a857b'],['\u2212 noisy',84,'#8a857b'],['\u2212 distributional',66,'#ce4747'],['\u2212 PER',59,'#ce4747'],['\u2212 multi-step',53,'#ce4747'],['DQN (none of them)',34,'#c9c4b9']];
+let s='<text x="30" y="24" font-size="12.5" fill="#6f6f6f">relative performance when one patch is removed (schematic)</text>';
+data.forEach((d,i)=>{const y=46+i*30;
+s+='<text x="196" y="'+(y+13)+'" text-anchor="end" font-size="12" font-weight="600" fill="#4a463f">'+d[0]+'</text>';
+s+='<rect x="208" y="'+y+'" width="'+(d[1]*3.9)+'" height="18" rx="4" fill="'+d[2]+'"/>';
+s+='<text x="'+(212+d[1]*3.9)+'" y="'+(y+13)+'" font-size="11" fill="#8a857b">'+d[1]+'</text>';});
+svg.innerHTML=s;
+}
+
+{
+const secs=[...document.querySelectorAll('.chapter')],ns=[...document.querySelectorAll('#strip .lnode')];
+function upd(){let cur='ch1';const y=window.scrollY+140;
+for(const s of secs){if(s.offsetTop<=y)cur=s.id;}
+const order=['ch1','ch2','ch3','ch4','ch5','ch6'];const ci=order.indexOf(cur);
+ns.forEach(n=>{n.classList.remove('on','done');const i=order.indexOf(n.dataset.ch);
+if(i<ci)n.classList.add('done');else if(i===ci)n.classList.add('on');});}
+window.addEventListener('scroll',upd,{passive:true});upd();
+}
+</script>
+</body>
+</html>
